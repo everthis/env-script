@@ -1,0 +1,23 @@
+{
+  "name": "env-script",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/everthis/env-script.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/everthis/env-script/issues"
+  },
+  "homepage": "https://github.com/everthis/env-script#readme",
+  "dependencies": {
+    "acorn": "^5.1.1"
+  }
+}
