@@ -1,9 +1,15 @@
+/*
+ * search all envirment variables used in this process.pwd()
+ */
 const fs = require('fs')
 const path = require('path')
 const acorn = require('acorn')
 const {promisify} = require('util')
 const readFileAsync = promisify(fs.readFile)
 const walk = require("acorn/dist/walk")
+const excludedFolders = ['.git', 'node_modules', 'bower_components', 'web_modules']
+let pwdFiles = []
+let pwdDirs = []
 
 const walkSync = (dir, filelist = []) => {
   let tmpPath = ''
@@ -17,7 +23,7 @@ const walkSync = (dir, filelist = []) => {
 }
 
 function typeCheck(filePath) {
-	const types = ['js', 'yml', 'json', 'config', 'tpl', 'html']
+	const types = ['js']
 	for (let i = types.length - 1; i >= 0; i--) {
 		if(types.indexOf(path.extname(filePath).slice(1)) !== -1) {
 			return true
@@ -47,18 +53,23 @@ function getEnvIdentifier(node, list) {
 	return list
 }
 
-async function genAST(file) {
+function filterDirs(arr) {
+	return arr.filter(el => excludedFolders.indexOf(path.parse(el).name) === -1)
+}
+
+async function genAST(wantedFileList) {
 	const res = []
 	try {
-		const wantedFileList = walkSync(path.resolve(__dirname, 'dir1'))
 		let str = ''
-
+		let ast = {}
 		for (let i = wantedFileList.length - 1; i >= 0; i--) {
 			str = await readFileAsync(wantedFileList[i], {encoding: 'utf8'})
 			// AssignmentExpression
-			// res.push(acorn.parse(str))
-			walk.ancestor(acorn.parse(str), {
-			  MemberExpression(node, ancestor) {
+			ast = acorn.parse(str, {
+				ecmaVersion: 8
+			})
+			walk.simple(ast, {
+			  MemberExpression(node) {
 			  	getEnvIdentifier(node, res)
 			  }
 			})
@@ -69,5 +80,32 @@ async function genAST(file) {
 	return res
 }
 
-genAST()
+
+function readDirAndFiles() {
+	let tmpPath
+	const dir = process.cwd()
+	return new Promise((resolve, reject) => {
+		fs.readdir(dir, (err, list) => {
+			if (err) {
+				reject(err)
+				return
+			}
+			list.forEach(file => {
+			  tmpPath = path.join(dir, file)
+			  fs.statSync(tmpPath).isDirectory()
+			  ? pwdDirs.push(tmpPath)
+			  : (typeCheck(tmpPath) ? pwdFiles.push(tmpPath) : null)
+			})
+			pwdDirs = filterDirs(pwdDirs)
+			for (let i = pwdDirs.length - 1; i >= 0; i--) {
+				pwdFiles = pwdFiles.concat(walkSync(pwdDirs[i]))
+			}
+			resolve(pwdFiles)
+		})
+	})
+}
+
+readDirAndFiles()
+.then(genAST)
 .then(data => console.log(pp(data)))
+
