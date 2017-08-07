@@ -1,5 +1,6 @@
 /*
- * search all envirment variables used in this process.pwd()
+ * search all environment variables used in this process.pwd()
+ * support: ENV['env1'] or ENV.env2
  */
 const fs = require('fs')
 const path = require('path')
@@ -36,7 +37,7 @@ function pp (obj) {
   return JSON.stringify(obj, null, 2)
 }
 
-function getEnvIdentifier(node, list) {
+function getEnvIdentifier(node, list = []) {
 	let res = ''
 	if (node.object
 		&& node.object.type === 'Identifier'
