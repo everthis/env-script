@@ -13,6 +13,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bin": {
+    "envchk": "bin/envchk.js"
+  },
   "bugs": {
     "url": "https://github.com/everthis/env-script/issues"
   },
